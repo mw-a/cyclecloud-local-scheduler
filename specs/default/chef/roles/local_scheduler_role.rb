@@ -1,3 +1,4 @@
 name "local_scheduler_role"
 description "Local changes to scheduler"
-run_list("recipe[local_scheduler::mariadb]")
+run_list("recipe[local_scheduler::mariadb]",
+  "recipe[local_scheduler::slurm_license_monitor]")
