@@ -1,0 +1,36 @@
+From 25e8d6c2111be78aa50462e214f322cbcd27e45b Mon Sep 17 00:00:00 2001
+From: Michael Weiser <michael.weiser@gmx.de>
+Date: Fri, 30 Jan 2026 12:43:59 +0100
+Subject: [PATCH] Add license server monitoring parameters
+
+---
+ templates/slurm.txt | 6 ++++++
+ 1 file changed, 6 insertions(+)
+
+diff --git a/templates/slurm.txt b/templates/slurm.txt
+index 8936289..6189361 100644
+--- a/templates/slurm.txt
++++ b/templates/slurm.txt
+@@ -43,6 +43,7 @@ Autoscale = $Autoscale
+         slurm.additional.config = $additional_slurm_config
+         slurm.ha_enabled = $configuration_slurm_ha_enabled
+         slurm.launch_parameters = $configuration_slurm_launch_parameters
++        slurm.license_servers = $configuration_slurm_license_servers
+ 
+         # Disable ip-XXXXXXXX hostname generation
+         cyclecloud.hosts.standalone_dns.enabled = ${NodeNameIsHostname==false}
+@@ -960,6 +961,11 @@ Order = 20
+         DefaultValue = 'use_interactive_step'
+         ParameterType = String
+ 
++        [[[parameter configuration_slurm_license_servers]]]
++        Label = License servers to monitor
++        Description = <resource prefix>:<port@server>:<feature1>,<feature2>,...
++        ParameterType = StringList
++
+ 
+ 
+     [[parameters Software]]
+-- 
+2.52.0
+

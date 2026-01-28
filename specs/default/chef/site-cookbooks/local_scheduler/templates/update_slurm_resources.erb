@@ -1,0 +1,49 @@
+#!/bin/bash
+
+# update slurm license resources
+
+set -euo pipefail
+
+LMSTAT=/opt/lmtools/lmstat
+CLUSTER=$(grep ^ClusterName= /etc/slurm/slurm.conf | cut -d= -f2)
+
+parse() {
+	local licenses="$1"
+	local prefix="$2"
+
+	grep -e "Users of \(${licenses// /\\\|}\):" | \
+			sed "s/.*Users of \([^:]\+\):.*Total of \([0-9]\+\) licenses\? issued.*Total of \([0-9]\+\) licenses\? in use.*/\1:\2:\3/" |
+			while IFS=: read lic total consumed ; do
+		resource=lic_$prefix${prefix:+_}${lic,,}
+		currenttotal=$(scontrol show lic --json | jq '.licenses | .[] | select(.LicenseName=="'$resource'@slurmdb") | .Total')
+		if [ -z "$currenttotal" ] ; then
+			echo "Adding resource $resource with total $total and allowed $total on cluster $CLUSTER"
+			sacctmgr -Q -i add resource $resource count=$total flags=absolute cluster=$CLUSTER allowed=$total
+		elif [ "$currenttotal" -ne "$total" ] ; then
+			echo "Updating resource $resource with total $total and allowed $total on cluster $CLUSTER"
+			sacctmgr -Q -i update resource $resource set count=$total
+			sacctmgr -Q -i update resource $resource set allowed=$total where cluster=$CLUSTER
+		fi
+
+		echo "Updating resource $resource with lastconsumed $consumed"
+		sacctmgr -Q -i update resource $resource set lastconsumed=${consumed}
+	done
+}
+
+monitor() {
+	local licfile="$1"
+	local licenses="$2"
+	local prefix="$3"
+
+	$LMSTAT -c "$licfile" -a | \
+		parse "$licenses" "$prefix"
+}
+
+date
+
+<% @license_servers.each do |ls| -%>
+monitor <%= ls[:server] %> \
+        "<%= ls[:features].join(' ') %>" \
+        <%= ls[:prefix] %>
+
+<% end -%>
